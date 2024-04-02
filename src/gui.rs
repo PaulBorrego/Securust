@@ -16,8 +16,8 @@ fn write_to_file(mut u: Vec<u8>,mut p: Vec<u8>) ->  Result<File, std::io::Error>
             .unwrap();
 
     let s = aead::SecretKey::default();
-    u.resize(32,0); //make the username and password take up 32 bytes
-    p.resize(32, 0);
+    u.resize(32,32); //make the username and password take up 32 bytes
+    p.resize(32, 32);
     
     let mut temp = OpenOptions::new()
         .read(true)

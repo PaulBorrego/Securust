@@ -3,21 +3,18 @@ use orion::aead;
 use orion::pwhash::{self};//, PasswordHash};
 // use orion::errors::UnknownCryptoError;
 use std::error::Error;
-// use std::fs;
 use std::fs::{self, 
-    // read, read_to_string, 
     File, OpenOptions};
 use std::io::{stdin, Read, Write};
-// use std::io;
 use std::path::Path;
 use std::collections::HashMap;
+use pad::PadStr;
+
 
 mod gui;
 
 
 fn main() {    
-    // let _ = User::new();
-    // encrypt_interface();
     encrypt_interface_user();
 }
 
@@ -52,29 +49,6 @@ pub fn interface() -> bool {
     false
 }
 
-// pub fn no_hash_interface(mut mappy: HashMap<String, User>) -> Option<String> {
-
-//     let mut input = String::new();          //stdin stuff
-//     println!("(N)ew User or (R)eturning? ");
-//     stdin().read_line(&mut input).unwrap();     //stdin stuff
-//     input.pop();                                    //gets rid of \n
-
-
-//     if input.to_lowercase().chars().next().unwrap().eq(&'n') {
-//         let x = User::new();
-//         mappy.insert(x.0, x.1);
-    
-//     }
-//     User::find(&mappy)
-// }
-
-// pub fn make_new_user(mappy: &HashMap<String, User>) -> bool {
-//     let x = User::new();
-//     mappy.insert(x.0, x.1);
-//     true
-
-// }
-
 pub fn write_to_file(s: &[u8], a: &str) ->  Result<File, std::io::Error> {
     let mut temp = format!("{}_encrypt.txt",a);
     let i = 0;
@@ -87,36 +61,8 @@ pub fn write_to_file(s: &[u8], a: &str) ->  Result<File, std::io::Error> {
     Ok(file)
 }
 
-
 pub fn encrypt_interface() -> () {
     let mut input = String::new();
-    // let mut user_map = HashMap::new();
-
-    // let v = fs::read_to_string("~/keys.tsv").unwrap().lines();
-    // for s in v {
-    //     user_map.insert(s.split_whitespace().next().unwrap(),User::from_tsv(s));
-    // }
-    
-    // println!("(r)eturn user or (n)ew");
-    // stdin().read_line(&mut input).unwrap();
-    // let u = match input.chars().next().unwrap() {
-    //     'r' => {
-    //         println!("Type username");
-    //         input.clear();
-    //         stdin().read_line(&mut input).unwrap();
-    //         input.pop();
-    //         *user_map.get(&input.as_str()).unwrap()
-    //     }
-    //     'n' => {
-    //         // let n = User::new();
-    //         // let i = n.username.clone();
-    //         // fs::write("~/keys.txt", User::to_tsv(&n)).expect("Failed to add tsv");
-    //         // user_map.insert(i.as_str(), n);
-    //         // user_map.get(&i.as_str()).unwrap()
-    //         User::new()
-    //     }
-    //     _ => panic!("not r or n"),
-    // };
 
     if interface() {
         let secret_key = aead::SecretKey::default();
@@ -153,8 +99,6 @@ pub fn encrypt_interface() -> () {
 
 pub fn encrypt_interface_user() -> () {
     let mut existing_users = User::get_existing();
-    // let mut input = String::new();
-    // let x = no_hash_interface(&existing_users);
     let mut input = String::new();          //stdin stuff
 
     println!("(N)ew User or (R)eturning? ");
@@ -167,19 +111,7 @@ pub fn encrypt_interface_user() -> () {
         existing_users.insert(a.0, a.1);        
     }
 
-    // for _ in 0..3 {
-        // let mut input = String::new();
-        // println!("Enter Username: ");
-        // stdin().read_line(&mut input).unwrap();    
-        // input.pop();
-        // let a = existing_users.get(&input);
-        // println!("{:?}", a);
-    // }
-
-
     let x = User::find(&existing_users);
-
-    println!("{:?}", x);    
 
     if x.is_some() {
         let secret_key = &existing_users.get(&x.unwrap()).unwrap().secret_password;
@@ -215,6 +147,7 @@ pub fn encrypt_interface_user() -> () {
     }
 }
 
+
 #[derive(PartialEq, Debug)]
 struct User {
     username: String,
@@ -233,10 +166,18 @@ impl User {
         let _ = f.read_to_end(&mut buffer).unwrap();
 
         fs::remove_file("temp.txt").expect("Failed To Delete the file \"temp\"");
+
+        let a = String::from(String::from_utf8(buffer[..32].to_vec()).unwrap().trim());
+        println!("{}",a.len());
         (String::from_utf8(buffer[..32].to_vec()).unwrap(),
+        // (String::from(String::from_utf8(buffer[..32].to_vec()).unwrap().trim()),
         User {
             username: String::from_utf8(buffer[..32].to_vec()).unwrap(),
-            password:String::from_utf8(buffer[32..64].to_vec()).unwrap(),
+            password: String::from_utf8(buffer[32..64].to_vec()).unwrap(),
+
+
+            // username: String::from(String::from_utf8(buffer[..32].to_vec()).unwrap().trim()),
+            // password: String::from(String::from_utf8(buffer[32..64].to_vec()).unwrap().trim()),
             secret_password: aead::SecretKey::from_slice(&buffer[64..96]).unwrap()
             }
         )
@@ -268,9 +209,6 @@ impl User {
     
                 }
             );
-            
-    
-            // println!("{}\t{}\t{:?}",String::from_utf8(user).unwrap(),String::from_utf8(pass).unwrap(),key);
         }
         returning_users
     }
@@ -285,25 +223,30 @@ impl User {
             println!("Enter Username: ");
             stdin().read_line(&mut input).unwrap();    
             input.pop();
-            for (k,_) in mappy {
-                println!("|{}:{}|",k,input);
-            }
-            let a = mappy.get(&input);
+
+            // for (k,_) in mappy {
+            //     println!("|{}:{}|",k,input);
+            // }
+            let a = mappy.get(&input.pad_to_width(32));
             if a.is_some() {
-                println!("SOME");
                 for _ in 0..3 {
+                    println!("Enter Password");
                     let mut in2 = String::new();
                     stdin().read_line(&mut in2).unwrap();    
-                    in2.pop();
+                    in2.pop();                  
     
-                    if input.eq(&a.unwrap().password) {
-                        return Some(input.clone());
+                    if in2.pad_to_width(32).eq(&a.unwrap().password) {
+                        return Some(input.pad_to_width(32).clone());
                     }
 
+                    println!("Password Denied");
                 }
             }
-            println!("Username Not found");
+            else {
+                println!("Username Not found");
+            }
         }
+        println!("Login Failed");
         None
         
     }
@@ -341,7 +284,6 @@ pub fn file_encrypt(secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> 
 
 pub fn file_decrypt(s: &str, secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> {
     let file = fs::read(s).expect("Reading problem");
-    println!("{:?}", file);
     let open = aead::open(secret_key, &file).expect("Open problem");
     match write_to_file(&open, s) {
         Ok(_) => Ok(()),
