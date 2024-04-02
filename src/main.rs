@@ -160,15 +160,13 @@ impl User {
         let mut buffer = Vec::new();
         let mut f = OpenOptions::new()
             .read(true)
-            .open("temp.txt")
+            .open("info/temp.txt")
             .unwrap();
 
         let _ = f.read_to_end(&mut buffer).unwrap();
 
-        fs::remove_file("temp.txt").expect("Failed To Delete the file \"temp\"");
-
-        let a = String::from(String::from_utf8(buffer[..32].to_vec()).unwrap().trim());
-        println!("{}",a.len());
+        fs::remove_file("info/temp.txt").expect("Failed To Delete the file \"temp\"");
+        
         (String::from_utf8(buffer[..32].to_vec()).unwrap(),
         // (String::from(String::from_utf8(buffer[..32].to_vec()).unwrap().trim()),
         User {
@@ -191,7 +189,7 @@ impl User {
             .write(true)
             .create(true)
             .append(true)
-            .open("info.txt")
+            .open("info/info.txt")
             .unwrap();
 
 

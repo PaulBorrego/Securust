@@ -12,7 +12,7 @@ fn write_to_file(mut u: Vec<u8>,mut p: Vec<u8>) ->  Result<File, std::io::Error>
             .write(true)
             .create(true)
             .append(true)
-            .open("info.txt")
+            .open("info/info.txt")
             .unwrap();
 
     let s = aead::SecretKey::default();
@@ -23,7 +23,7 @@ fn write_to_file(mut u: Vec<u8>,mut p: Vec<u8>) ->  Result<File, std::io::Error>
         .read(true)
         .write(true)
         .create(true)
-        .open("temp.txt")
+        .open("info/temp.txt")
         .unwrap();
 
     file.write_all(&u)?;
@@ -41,11 +41,15 @@ fn write_to_file(mut u: Vec<u8>,mut p: Vec<u8>) ->  Result<File, std::io::Error>
 
 
 pub fn main() -> iced::Result {
+    let ferry = Some(window::icon::from_file("img/ferry.png").unwrap());
     let settings = Settings {
         window: window::Settings {
             size: iced::Size { width: 600.0f32, height: 260.0f32 },
             resizable: true,
             decorations: true,
+            level: window::Level::AlwaysOnTop,
+            position: window::Position::Centered,
+            icon: ferry,  
             ..Default::default()
         },
         ..Default::default()
