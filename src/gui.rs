@@ -70,6 +70,34 @@ pub struct TextBox {
     error: String,
 }
 
+//Things need to return true,
+//Username is between length 4 and 32
+//Password is between length 8 and 32
+//Username must be unique
+//Possibly more in future
+fn user_password_parameters(username: &[u8], password: &[u8]) -> bool {
+    username.len() >= 4 &&  username.len() <= 32 && password.len() <= 32 && password.len() >= 8 && unique_checker(username)
+}
+
+fn user_password_problems(username: &[u8], password: &[u8]) -> String {
+    let mut problem = String::new();
+    if username.len() < 4 || username.len() > 32 {
+        problem = problem + "Username needs to be between 4 and 32 characters\n";
+    }
+    if password.len() < 8 || password.len() > 32 {
+        problem = problem + "Password needs to be between 8 and 32 characters\n";
+    }
+    if !unique_checker(username) {
+        problem = problem + "Username is not unique\n";
+    }
+    problem
+}
+
+fn unique_checker(_username: &[u8]) -> bool {
+    // todo!("Should ensure no two usernames are the same!");
+    true
+}
+
 impl Application for TextBox {
     type Message = Message;
     type Flags = ();
@@ -94,12 +122,12 @@ impl Application for TextBox {
             Message::UserName(a) => self.user = a,
             Message::Password(a) => self.pass = a,
             Message::ENTER => {
-                if !self.pass.is_empty() {
+                if user_password_parameters(self.user.as_bytes(), self.pass.as_bytes()) {
                     write_to_file(self.user.clone().into_bytes(), self.pass.clone().into_bytes()).expect("File Failure");
                     return window::close(window::Id::MAIN);
                 }
                 else {
-                    self.error = String::from("No Password Given");
+                    self.error = user_password_problems(self.user.as_bytes(), self.pass.as_bytes());
                 }
             },
         }

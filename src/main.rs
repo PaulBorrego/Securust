@@ -77,7 +77,7 @@ pub fn encrypt_interface() -> () {
                     println!("What would you like to encrypt? (s)tring or (f)ile");
                     stdin().read_line(&mut input).unwrap();
                     
-                     match input.chars().next().unwrap() {
+                    match input.chars().next().unwrap() {
                         's' => string_encrypt(&secret_key).unwrap(),
                         'f' => file_encrypt(&secret_key).unwrap(),
                         _ => panic!("not s or f"), 
@@ -101,17 +101,28 @@ pub fn encrypt_interface_user() -> () {
     let mut existing_users = User::get_existing();
     let mut input = String::new();          //stdin stuff
 
-    println!("(N)ew User or (R)eturning? ");
-    stdin().read_line(&mut input).unwrap();     //stdin stuff
-    input.pop();                                    //gets rid of \n
-
     
-    if input.to_lowercase().chars().next().unwrap().eq(&'n') {
-        let a = User::new();
-        existing_users.insert(a.0, a.1);        
+    loop {
+        input.clear();
+        println!("(N)ew User or (R)eturning? [(b)ack will bring you back]");
+        stdin().read_line(&mut input).unwrap();     //stdin stuff
+        match input.to_lowercase().chars().next().unwrap() {
+            'n' => {
+                if input.to_lowercase().chars().next().unwrap().eq(&'n') {
+                    let a = User::new();
+                    existing_users.insert(a.0, a.1);        
+                }
+                break;
+            },
+            'r' => break,
+            'b' => return (),
+            _ => continue,
+        }
     }
+    
 
     let x = User::find(&existing_users);
+    
 
     if x.is_some() {
         let secret_key = &existing_users.get(&x.unwrap()).unwrap().secret_password;
@@ -122,25 +133,46 @@ pub fn encrypt_interface_user() -> () {
 
             match input.chars().next().unwrap() {
                 'e' => {
-                    input.clear();
-                    println!("What would you like to encrypt? (s)tring or (f)ile");
-                    stdin().read_line(&mut input).unwrap();
-                    
-                     match input.chars().next().unwrap() {
-                        's' => string_encrypt(secret_key).unwrap(),
-                        'f' => file_encrypt(secret_key).unwrap(),
-                        _ => panic!("not s or f"), 
-                    };
+                    loop {
+                        input.clear();
+                        println!("What would you like to encrypt? (s)tring or (f)ile");
+                        stdin().read_line(&mut input).unwrap();
+                        
+                        match input.chars().next().unwrap() {
+                            's' => {
+                                string_encrypt(secret_key).unwrap();
+                                break;
+                            },
+                            'f' => {
+                                file_encrypt(secret_key).unwrap();
+                                break;
+                            },
+                            'b' => break,
+                            _ => println!("Did not select (s)tring or (f)ile"), 
+                        };
+                    }
                 }
                 'd' => {
-                    input.clear();
-                    println!("What file would you like to decrypt");
-                    stdin().read_line(&mut input).unwrap();
-                    input.pop();
-
-                    file_decrypt(&input, secret_key).unwrap();
+                    loop {
+                        input.clear();
+                        println!("What file would you like to decrypt");
+                        stdin().read_line(&mut input).unwrap();
+                        input.pop();
+                        if input.eq("b") {
+                            break;
+                        }
+                        match file_decrypt(&input, secret_key) {
+                            Ok(_) => break,
+                            Err(_) => {
+                                println!("File not found");
+                                continue;
+                            },
+                        }
+                    }
+                    
                 }
-                _ => panic!("not e or d"),
+                'b' => break,
+                _ => println!("Did not select (e)ncyrpt or (d)ecrypt"),
             };
         }
 
@@ -266,12 +298,22 @@ pub fn string_encrypt(secret_key: &aead::SecretKey) -> Result< (), Box<dyn Error
 }
 
 pub fn file_encrypt(secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> {
-    println!("Type file path you'd like to be encrypted: ");
+    let contents: String;
     let mut buf = String::new();
-    stdin().read_line(& mut buf).unwrap();
-    buf.pop();    //gets rid of \n
 
-    let contents = fs::read_to_string(buf.clone())?;
+    loop {
+        println!("Type file path you'd like to be encrypted: ");
+        stdin().read_line(& mut buf).unwrap();
+        buf.pop();    //gets rid of \n
+        match fs::read_to_string(buf.clone()) {
+            Ok(a) => {
+                contents = a;
+                break;
+            },
+            Err(_) => (),
+        };
+        println!("File Not Found");
+    }
     let text = aead::seal(&secret_key, &contents.as_bytes())?; 
 
     match write_to_file(&text,buf.as_str()) {
@@ -281,7 +323,7 @@ pub fn file_encrypt(secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> 
 }
 
 pub fn file_decrypt(s: &str, secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> {
-    let file = fs::read(s).expect("Reading problem");
+    let file = fs::read(s)?;
     let open = aead::open(secret_key, &file).expect("Open problem");
     match write_to_file(&open, s) {
         Ok(_) => Ok(()),
