@@ -1,0 +1,11 @@
+/Users/jeremybrigham/Psecurust/Securust/target/debug/deps/libglyphon-a0caa64acac7d19b.rmeta: /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/lib.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/error.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_atlas.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_render.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/shader.wgsl
+
+/Users/jeremybrigham/Psecurust/Securust/target/debug/deps/libglyphon-a0caa64acac7d19b.rlib: /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/lib.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/error.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_atlas.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_render.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/shader.wgsl
+
+/Users/jeremybrigham/Psecurust/Securust/target/debug/deps/glyphon-a0caa64acac7d19b.d: /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/lib.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/error.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_atlas.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_render.rs /Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/shader.wgsl
+
+/Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/lib.rs:
+/Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/error.rs:
+/Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_atlas.rs:
+/Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/text_render.rs:
+/Users/jeremybrigham/.cargo/registry/src/index.crates.io-6f17d22bba15001f/glyphon-0.5.0/src/shader.wgsl:

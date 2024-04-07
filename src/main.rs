@@ -97,9 +97,47 @@ pub fn encrypt_interface() -> () {
     }
 }
 
+pub fn makeDirIfNeeded(path: &str) -> () {
+    // Check if the directory exists
+    if let Ok(metadata) = fs::metadata(path) {
+        if metadata.is_dir() {
+            println!("Found directory!.");
+        } else {
+            println!("A file with the same name exists, not a directory.");
+        }
+    } else {
+        println!("No users. Creating...");
+        //let users = "./users";
+        match fs::create_dir(path){
+            Ok(_) => println!("Made directory"),
+            Err(_err) => println!("Fcuk this shit"),
+        }
+
+}
+}
+
 pub fn encrypt_interface_user() -> () {
     let mut existing_users = User::get_existing();
     let mut input = String::new();          //stdin stuff
+    let path = "./users";
+
+    // Check if the directory exists
+    if let Ok(metadata) = fs::metadata(path) {
+        if metadata.is_dir() {
+            println!("Found users!.");
+        } else {
+            println!("A file with the same name exists, not a directory.");
+        }
+    } else {
+        println!("No users. Creating...");
+        let users = "./users";
+        match fs::create_dir(users){
+            Ok(_) => println!("Made directory"),
+            Err(_err) => println!("Fcuk this shit"),
+        }
+
+
+    }
 
     
     loop {
@@ -308,6 +346,7 @@ pub fn file_encrypt(secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> 
         match fs::read_to_string(buf.clone()) {
             Ok(a) => {
                 contents = a;
+                println!("Encrypted file!");
                 break;
             },
             Err(_) => (),
