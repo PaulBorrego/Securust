@@ -60,6 +60,17 @@ pub fn write_to_file(s: &[u8], a: &str) ->  Result<File, std::io::Error> {
     file.write_all(s)?;
     Ok(file)
 }
+pub fn decrypt_to_file(s: &[u8], a: &str) ->  Result<File, std::io::Error> {
+    let mut temp = format!("{}_decrypted.txt",a);
+    let i = 0;
+    while Path::new(&temp).exists() {
+        temp = format!("{}{}",i.to_string(), temp);
+    }
+    let p = Path::new(&temp);
+    let mut file = File::create(p)?;
+    file.write_all(s)?;
+    Ok(file)
+}
 
 pub fn userwrite_to_file(s: &[u8], a: &str, dir: &str) ->  Result<File, std::io::Error> {
     let mut temp = format!("{}_encrypt.txt",a);
@@ -102,7 +113,7 @@ pub fn encrypt_interface() -> () {
                     stdin().read_line(&mut input).unwrap();
                     input.pop();
 
-                    file_decrypt(&input, &secret_key, &nodir).unwrap();
+                    file_decrypt(&input, &secret_key).unwrap();
                 }
                 _ => panic!("not e or d"),
             };
@@ -238,10 +249,10 @@ pub fn encrypt_interface_user() -> () {
                         let fileloc = format!("{}/{}",  &userdir, &input);
                         let nodir = "";
                         println!("{} fileloc, userencrypt", &fileloc);
-                        match file_decrypt(&fileloc , secret_key,&nodir) {
+                        match file_decrypt(&fileloc , secret_key) {
                             Ok(_) => break,
-                            Err(_) => {
-                                println!("File not found");
+                            Err(err) => {
+                                println!("File not found, {}", err);
                                 continue;
                             },
                         }
@@ -399,8 +410,27 @@ pub fn file_encrypt(secret_key: &aead::SecretKey, dir:&str) -> Result<(), Box<dy
         Err(_) => Err("Writing Error")?
     }
 }
-
+/*
 pub fn file_decrypt(s: &str, secret_key: &aead::SecretKey, dir: &str) -> Result<(), Box<dyn Error>> {
+    let file = fs::read(format!("{}/{}",&dir, &s))?;
+    println!("{}/{} decrypting",&dir, &s);
+    let open = aead::open(secret_key, &file).expect("Open problem");
+    match write_to_file(&open, s) {
+        Ok(_) => Ok(()),
+        Err(_) => Err("Writing Error")?
+    }
+}
+*/
+pub fn file_decrypt(s: &str, secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> {
+    let file = fs::read(s)?;
+    let open = aead::open(secret_key, &file).expect("Open problem");
+    match decrypt_to_file(&open, s) {
+        Ok(_) => Ok(()),
+        Err(_) => Err("Writing Error")?
+    }
+}
+
+pub fn userfile_decrypt(s: &str, secret_key: &aead::SecretKey, dir: &str) -> Result<(), Box<dyn Error>> {
     let file = fs::read(format!("{}/{}",&dir, &s))?;
     println!("{}/{} decrypting",&dir, &s);
     let open = aead::open(secret_key, &file).expect("Open problem");
