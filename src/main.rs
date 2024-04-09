@@ -74,6 +74,30 @@ pub fn write_to_file(s: &[u8], a: &str, encrypt: bool) ->  Result<File, std::io:
     file.write_all(s)?;
     Ok(file)
 }
+pub fn decrypt_to_file(s: &[u8], a: &str) ->  Result<File, std::io::Error> {
+    let mut temp = format!("{}_decrypted.txt",a);
+    let i = 0;
+    while Path::new(&temp).exists() {
+        temp = format!("{}{}",i.to_string(), temp);
+    }
+    let p = Path::new(&temp);
+    let mut file = File::create(p)?;
+    file.write_all(s)?;
+    Ok(file)
+}
+
+pub fn userwrite_to_file(s: &[u8], a: &str, dir: &str) ->  Result<File, std::io::Error> {
+    let mut temp = format!("{}_encrypt.txt",a);
+    let i = 0;
+    while Path::new(&temp).exists() {
+        temp = format!("{}{}",i.to_string(), temp);
+    }
+    let loc = format!("{}/{}", &dir, &temp);
+    let p = Path::new(&loc);
+    let mut file = File::create(p)?;
+    file.write_all(s)?;
+    Ok(file)
+}
 
 pub fn encrypt_interface() -> () {
     let mut input = String::new();
@@ -84,7 +108,7 @@ pub fn encrypt_interface() -> () {
             input.clear();
             println!("Would you like to (e)ncrypt or (d)ecrypt");
             stdin().read_line(&mut input).unwrap();
-
+            let nodir = "";
             match input.chars().next().unwrap() {
                 'e' => {
                     input.clear();
@@ -92,8 +116,8 @@ pub fn encrypt_interface() -> () {
                     stdin().read_line(&mut input).unwrap();
                     
                     match input.chars().next().unwrap() {
-                        's' => string_encrypt(&secret_key).unwrap(),
-                        'f' => file_encrypt(&secret_key).unwrap(),
+                        's' => string_encrypt(&secret_key, &nodir).unwrap(),
+                        'f' => file_encrypt(&secret_key, &nodir).unwrap(),
                         _ => panic!("not s or f"), 
                     };
                 }
@@ -111,14 +135,52 @@ pub fn encrypt_interface() -> () {
     }
 }
 
+pub fn makeDirIfNeeded(path: &str) -> () {
+    // Check if the directory exists
+    if let Ok(metadata) = fs::metadata(path) {
+        if metadata.is_dir() {
+            println!("Found directory!.");
+        } else {
+            println!("A file with the same name exists, not a directory.");
+        }
+    } else {
+        println!("No users. Creating...");
+        //let users = "./users";
+        match fs::create_dir(path){
+            Ok(_) => println!("Made directory {}", path),
+            Err(_err) => println!("Fcuk this shit"),
+        }
+
+}
+}
+
 pub fn encrypt_interface_user() -> () {
     let mut existing_users = User::get_existing();
     let mut input = String::new();          //stdin stuff
+    let path = "./users";
+
+    // Check if the directory exists
+    if let Ok(metadata) = fs::metadata(path) {
+        if metadata.is_dir() {
+            println!("Found users!.");
+        } else {
+            println!("A file with the same name exists, not a directory.");
+        }
+    } else {
+        println!("No users. Creating...");
+        let users = "./users";
+        match fs::create_dir(users){
+            Ok(_) => println!("Made directory"),
+            Err(_err) => println!("Fcuk this shit"),
+        }
+
+
+    }
 
     
     loop {
         input.clear();
-        println!("(N)ew User or (R)eturning? [(b)ack will bring you back]");
+        println!("(N)ew User or (R)eturning? [(b)ack will end program.]");
         stdin().read_line(&mut input).unwrap();     //stdin stuff
         match input.to_lowercase().chars().next().unwrap() {
             'n' => {
@@ -139,6 +201,9 @@ pub fn encrypt_interface_user() -> () {
     
 
     if x.is_some() {
+        let userdir = format!("./users/{}", &x.as_ref().unwrap());
+        makeDirIfNeeded(&userdir);
+        //println!("{} directory", &userdir);
         let secret_key = &existing_users.get(&x.unwrap()).unwrap().secret_password;
         loop {
             input.clear();
@@ -154,11 +219,11 @@ pub fn encrypt_interface_user() -> () {
                         
                         match input.chars().next().unwrap() {
                             's' => {
-                                string_encrypt(secret_key).unwrap();
+                                string_encrypt(secret_key, &userdir).unwrap();
                                 break;
                             },
                             'f' => {
-                                file_encrypt(secret_key).unwrap();
+                                file_encrypt(secret_key, &userdir).unwrap();
                                 break;
                             },
                             'b' => break,
@@ -170,15 +235,38 @@ pub fn encrypt_interface_user() -> () {
                     loop {
                         input.clear();
                         println!("What file would you like to decrypt");
+                        //let userpaths = fs::read_dir(userdir);
+                        match fs::read_dir(&userdir) {
+                            Ok(paths) => {
+                                for path in paths {
+                                    if let Ok(entry) = path {
+                                        if let Ok(file_name) = entry.file_name().into_string() {
+                                            
+                                            println!("{}", file_name);
+                                        } else {
+                                            println!("Error: Unable to convert file name to string");
+                                        }
+                                    } else {
+                                        println!("Error: Unable to read directory entry");
+                                    }
+                                }
+                            }
+                            Err(err) => {
+                                println!("Error: {}", err);
+                            }
+                        }
                         stdin().read_line(&mut input).unwrap();
                         input.pop();
                         if input.eq("b") {
                             break;
                         }
-                        match file_decrypt(&input, secret_key) {
+                        let fileloc = format!("{}/{}",  &userdir, &input);
+                        let nodir = "";
+                        println!("{} fileloc, userencrypt", &fileloc);
+                        match file_decrypt(&fileloc , secret_key) {
                             Ok(_) => break,
-                            Err(_) => {
-                                println!("File not found");
+                            Err(err) => {
+                                println!("File not found, {}", err);
                                 continue;
                             },
                         }
@@ -296,7 +384,7 @@ impl User {
     }
 }
 
-pub fn string_encrypt(secret_key: &aead::SecretKey) -> Result< (), Box<dyn Error>> {
+pub fn string_encrypt(secret_key: &aead::SecretKey, dir:&str) -> Result< (), Box<dyn Error>> {
     println!("Type string you'd like to be encrypted: ");
     let mut buf = String::new();
     stdin().read_line(& mut buf).unwrap();
@@ -305,13 +393,15 @@ pub fn string_encrypt(secret_key: &aead::SecretKey) -> Result< (), Box<dyn Error
     let text = aead::seal(&secret_key, buf.as_bytes())?;
 
 
-    match write_to_file(&text, "string.txt",true) {
+
+    match userwrite_to_file(&text, "string", &dir) {
+
         Ok(_) => Ok(()),
         Err(_) => Err("Writing Error")?,
     }
 }
 
-pub fn file_encrypt(secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> {
+pub fn file_encrypt(secret_key: &aead::SecretKey, dir:&str) -> Result<(), Box<dyn Error>> {
     let contents: String;
     let mut buf = String::new();
 
@@ -329,6 +419,7 @@ pub fn file_encrypt(secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> 
         match fs::read_to_string(buf.clone()) {
             Ok(a) => {
                 contents = a;
+                println!("Encrypted file!");
                 break;
             },
             Err(_) => (),
@@ -342,11 +433,31 @@ pub fn file_encrypt(secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> 
         Err(_) => Err("Writing Error")?
     }
 }
-
+/*
+pub fn file_decrypt(s: &str, secret_key: &aead::SecretKey, dir: &str) -> Result<(), Box<dyn Error>> {
+    let file = fs::read(format!("{}/{}",&dir, &s))?;
+    println!("{}/{} decrypting",&dir, &s);
+    let open = aead::open(secret_key, &file).expect("Open problem");
+    match write_to_file(&open, s) {
+        Ok(_) => Ok(()),
+        Err(_) => Err("Writing Error")?
+    }
+}
+*/
 pub fn file_decrypt(s: &str, secret_key: &aead::SecretKey) -> Result<(), Box<dyn Error>> {
     let file = fs::read(s)?;
     let open = aead::open(secret_key, &file).expect("Open problem");
-    match write_to_file(&open, s, false) {
+    match decrypt_to_file(&open, s) {
+        Ok(_) => Ok(()),
+        Err(_) => Err("Writing Error")?
+    }
+}
+
+pub fn userfile_decrypt(s: &str, secret_key: &aead::SecretKey, dir: &str) -> Result<(), Box<dyn Error>> {
+    let file = fs::read(format!("{}/{}",&dir, &s))?;
+    println!("{}/{} decrypting",&dir, &s);
+    let open = aead::open(secret_key, &file).expect("Open problem");
+    match write_to_file(&open, s) {
         Ok(_) => Ok(()),
         Err(_) => Err("Writing Error")?
     }
