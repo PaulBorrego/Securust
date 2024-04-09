@@ -139,6 +139,7 @@ impl Application for TextBox {
     }
 
 
+
     fn view(&self) -> Element<'_, Self::Message> {
         let user = text_input("Empty", &self.user,)
         .on_input(Message::UserName)
