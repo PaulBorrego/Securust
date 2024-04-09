@@ -9,9 +9,11 @@ use std::io::{stdin, Read, Write};
 use std::path::Path;
 use std::collections::HashMap;
 use pad::PadStr;
+use std::str;
 
 
 mod gui;
+// mod file_explorer;
 
 
 fn main() {    
@@ -49,12 +51,24 @@ pub fn interface() -> bool {
     false
 }
 
-pub fn write_to_file(s: &[u8], a: &str) ->  Result<File, std::io::Error> {
-    let mut temp = format!("{}_encrypt.txt",a);
-    let i = 0;
+pub fn write_to_file(s: &[u8], a: &str, encrypt: bool) ->  Result<File, std::io::Error> {
+    let p = Path::new(a);
+    let file_type = p.extension().unwrap().to_str().unwrap();
+    let file_name = p.file_stem().unwrap().to_str().unwrap();
+
+    let e_or_d = match encrypt {
+        true => "_e",
+        false => "_d",
+    };
+
+    let mut temp = format!("{}{}.{}",file_name,e_or_d,file_type);
+
+    let mut i = 0;
     while Path::new(&temp).exists() {
-        temp = format!("{}{}",i.to_string(), temp);
+        temp = format!("{}{}{}.{}",i.to_string(), file_name,e_or_d,file_type);
+        i += 1;
     }
+
     let p = Path::new(&temp);
     let mut file = File::create(p)?;
     file.write_all(s)?;
@@ -379,7 +393,9 @@ pub fn string_encrypt(secret_key: &aead::SecretKey, dir:&str) -> Result< (), Box
     let text = aead::seal(&secret_key, buf.as_bytes())?;
 
 
+
     match userwrite_to_file(&text, "string", &dir) {
+
         Ok(_) => Ok(()),
         Err(_) => Err("Writing Error")?,
     }
@@ -389,7 +405,14 @@ pub fn file_encrypt(secret_key: &aead::SecretKey, dir:&str) -> Result<(), Box<dy
     let contents: String;
     let mut buf = String::new();
 
+    let dir = fs::read_dir(Path::new(".")).unwrap();
+
+    for a in dir {
+        println!("{:?}",a.unwrap());
+    }
+
     loop {
+        buf.clear();
         println!("Type file path you'd like to be encrypted: ");
         stdin().read_line(& mut buf).unwrap();
         buf.pop();    //gets rid of \n
@@ -405,7 +428,7 @@ pub fn file_encrypt(secret_key: &aead::SecretKey, dir:&str) -> Result<(), Box<dy
     }
     let text = aead::seal(&secret_key, &contents.as_bytes())?; 
 
-    match write_to_file(&text,buf.as_str()) {
+    match write_to_file(&text,buf.as_str(),true) {
         Ok(_) => Ok(()),
         Err(_) => Err("Writing Error")?
     }
